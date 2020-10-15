@@ -6,13 +6,25 @@ const { Router } = require('express');
 const app = express();
 app.use(express.json());
 
+app.use((req,res, next) => {
+console.log('Hello from middleware !');
+next();
+});
+
+app.use((req,res,next) => {
+    req.requestTime = new Date().toISOString();
+    next();
+});
+
 const tours = JSON.parse(
     fs.readFileSync(`${__dirname}/dev-data/data/tours-simple.json`)
 );
 
 const getAllTours = (req,res) => {
+    console.log(req.requestTime);
     res.status(200).json({
         status : 'success',
+        requestedat : req.requestTime,
         result: tours.length,
         data:{
             tours
@@ -58,6 +70,13 @@ const createTour = (req,res) =>{
 };
 
 const updateTour = (req, res) => {
+
+var file_cont = fs.readFileSync(`${__dirname}/dev-data/data/tours-simple.json`);
+var content = JSON.parse(file_cont);
+var fid = content.id;
+
+
+
     res.status(200).json({
       status: 'success',
       data: {
@@ -73,20 +92,14 @@ const deleteTour = (req, res) => {
     });
   };
 
-//Read all Tours
-app.get('/api/v1/tours', getAllTours);
+app.route('/api/v1/tours')
+.get(getAllTours)
+.post(createTour);
 
-//Find Tour by id
-app.get('/api/v1/tours/:id', getTourById);
-
-//Create Tour
-app.post('/api/v1/tours', createTour);
-
-//Update Tour by id search
-app.patch('/api/v1/tours/:id', updateTour);
-
-//Delete Tour by id
-app.delete('/api/v1/tours/:id', deleteTour);
+app.route('/api/v1/tours/:id')
+.get(getTourById)
+.patch(updateTour)
+.delete(deleteTour);
 
 const users = JSON.parse(
     fs.readFileSync(`${__dirname}/dev-data/data/users.json`)
